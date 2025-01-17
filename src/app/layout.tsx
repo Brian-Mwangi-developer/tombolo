@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+// app/layout.tsx
+
+import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -24,6 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Correct path to access smartcharts.css in the../../node_modules/@deriv public folder */}
+        <link rel="stylesheet" href="/dist/smartcharts.css" type="text/css" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
