@@ -67,16 +67,19 @@ export class DerivAPI {
         }
     }
 
-    static sendRequest(request: object): Promise<Record<string, unknown>> {
+    static sendRequest(request: object): Promise<any> {
         return new Promise((resolve, reject) => {
             const timeoutDuration = 30000; // 30 seconds timeout
             let timeoutId: NodeJS.Timeout;
 
             const handleMessage = (event: MessageEvent) => {
                 const response = JSON.parse(event.data);
+
+                // Check if this is the response we're waiting for
                 if (response.msg_type === Object.keys(request)[0] || response.error?.code) {
                     clearTimeout(timeoutId);
                     this.ws.removeEventListener('message', handleMessage);
+
                     if (response.error) {
                         reject(new Error(response.error.message));
                     } else {
@@ -85,21 +88,23 @@ export class DerivAPI {
                 }
             };
 
-            const trySend = () => {
-                if (this.isReady && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.addEventListener('message', handleMessage);
-                    this.ws.send(JSON.stringify(request));
+            const sendRequestAction = () => {
+                this.ws.addEventListener('message', handleMessage);
+                this.ws.send(JSON.stringify(request));
 
-                    timeoutId = setTimeout(() => {
-                        this.ws.removeEventListener('message', handleMessage);
-                        reject(new Error('Request timeout'));
-                    }, timeoutDuration);
-                } else {
-                    this.sendWhenReady(trySend);
-                }
+                timeoutId = setTimeout(() => {
+                    this.ws.removeEventListener('message', handleMessage);
+                    reject(new Error('Request timeout'));
+                }, timeoutDuration);
             };
 
-            trySend();
+            // Check if the WebSocket is ready before sending
+            if (this.isReady && this.ws.readyState === WebSocket.OPEN) {
+                sendRequestAction();
+            } else {
+                // Use sendWhenReady if the WebSocket is not ready
+                this.sendWhenReady(sendRequestAction);
+            }
         });
     }
 
