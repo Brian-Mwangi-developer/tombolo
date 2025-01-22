@@ -1,7 +1,8 @@
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack(config,isServer) {
+  webpack(config, { isServer }) {
     config.plugins.push(
       new CopyWebpackPlugin({
         patterns: [
@@ -22,4 +23,5 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
+
