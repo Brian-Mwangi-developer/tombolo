@@ -1,22 +1,17 @@
-'use client';
-import Header from '../header';
+// src/app/derivchart/page.tsx
+import React from "react";
+import SmartChartComponent from "../../components/SmartChartComponent";
 
-import React from 'react';
-import SmartChartComponent from '../../components/SmartChartComponent';
-
-const DerivChartPage: React.FC = () => {
+const DerivChartPage = () => {
   return (
-    <div className="chart-page-container">
-      <Header />
-      <h1 className="text-center my-4">Deriv Smart Chart</h1>
-      <SmartChartComponent />
+    <div>
+      <h1>Live Chart</h1>
+      <SmartChartComponent symbol="R_100" />
     </div>
   );
 };
 
 export default DerivChartPage;
-
-
 
 
 
