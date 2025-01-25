@@ -1,12 +1,13 @@
 // src/app/derivchart/page.tsx
 import React from "react";
 import SmartChartComponent from "../../components/SmartChartComponent";
+import Header from "../header";
 
 const DerivChartPage = () => {
   return (
     <div>
-      <h1>Live Chart</h1>
-      <SmartChartComponent symbol="R_100" />
+      <Header />
+      <SmartChartComponent />
     </div>
   );
 };
