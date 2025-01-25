@@ -6,6 +6,7 @@ import {
   ChartMode,
   Views,
   StudyLegend,
+  BottomWidget,
   DrawTools,
   Share,
   ChartSetting,
@@ -13,6 +14,7 @@ import {
   fastmarker,
 } from '@deriv/deriv-charts';
 import { DerivAPI } from '../utils/derivApi';
+;
 
 const SmartChartComponent: React.FC = () => {
   const [symbol, setSymbol] = useState<string>('R_10');
@@ -22,6 +24,8 @@ const SmartChartComponent: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [highPrice, setHighPrice] = useState<number>(100);
   const [lowPrice, setLowPrice] = useState<number>(50);
+  const allTicks: keyof AuditDetailsForExpiredContract | [] = [];
+  const contractInfo: keyof ProposalOpenContract | {} = {};
 
   
 
@@ -48,7 +52,7 @@ const SmartChartComponent: React.FC = () => {
   const requestAPI = useCallback(async (request: Record<string, unknown>) => {
     try {
       const response = await DerivAPI.sendRequest(request);
-      console.log('API response:', response);
+      console.log('API response received to tombolo:', response);
       return response;
     } catch (error) {
       console.error('API request error:', error);
@@ -87,11 +91,15 @@ const SmartChartComponent: React.FC = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
+
+
+
   return (
+
     <div
       className="chart-container"
       style={{
-        width: '100%',
+        width: '100vh',
         height: '100vh',
         backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
         transition: 'background-color 0.3s ease',
@@ -123,6 +131,9 @@ const SmartChartComponent: React.FC = () => {
         </button>
       </div>
 
+
+      <div>
+
       <SmartChart
         id="deriv_chart"
         symbol={symbol}
@@ -140,6 +151,7 @@ const SmartChartComponent: React.FC = () => {
         shouldFetchTradingTimes
         shouldFetchTickHistory
         isLive
+        Online
         enabledChartFooter
         barriers={[
           {
@@ -182,7 +194,9 @@ const SmartChartComponent: React.FC = () => {
           </div>
         )}
       />
+      </div>
     </div>
+    
   );
 };
 

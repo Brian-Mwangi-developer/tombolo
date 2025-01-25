@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@deriv/api-types": "^1.0.2589",
     "@deriv/deriv-charts": "^2.8.0",
     "@heroicons/react": "^2.2.0",
     "axios": "^1.7.9",

@@ -79,17 +79,17 @@ export class DerivAPI {
     }
 
     static sendRequest(request: object): Promise<any> {
-        console.log('Sending request:', request);
+        console.log('Sending request mama yao:', request);
         return new Promise((resolve, reject) => {
             const timeoutDuration = 30000; // 30 seconds timeout
             let timeoutId: NodeJS.Timeout;
 
             const handleMessage = (event: MessageEvent) => {
-                console.log('Received message:', event.data);
+                console.log('Received message mama yao:', event.data);
                 const response = JSON.parse(event.data);
 
                 if (response.msg_type === Object.keys(request)[0] || response.error?.code) {
-                    console.log('Received valid response:', response);
+                    console.log('Received valid response mama yao:', response);
                     clearTimeout(timeoutId);
                     this.ws.removeEventListener('message', handleMessage);
 
