@@ -1,3 +1,7 @@
+interface ForgetRequest {
+    forget: string; // The 'forget' property should be a string
+}
+
 export class DerivAPI {
     private static ws: WebSocket;
     private static isReady = false;
@@ -55,7 +59,7 @@ export class DerivAPI {
             console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
             setTimeout(() => {
-                this.initConnection();
+                this.initConnection(); // Attempt to reconnect
                 this.reconnectDelay *= 2; // Exponential backoff
             }, this.reconnectDelay);
         } else {
@@ -68,6 +72,7 @@ export class DerivAPI {
         if (this.isReady && this.ws.readyState === WebSocket.OPEN) {
             console.log('WebSocket is ready, sending request...');
             requestAction();
+            this.processQueue(); // Process the next request in the queue after this one finishes
         } else {
             console.log('WebSocket is not ready, queuing request...');
             this.requestQueue.push(requestAction);
@@ -78,23 +83,30 @@ export class DerivAPI {
         }
     }
 
+    private static processQueue() {
+        if (this.requestQueue.length > 0) {
+            const nextRequest = this.requestQueue.shift();
+            if (nextRequest) {
+                nextRequest();
+            }
+        }
+    }
+
     static sendRequest(request: object): Promise<any> {
-        console.log('Sending request mama yao:', request);
         return new Promise((resolve, reject) => {
             const timeoutDuration = 30000; // 30 seconds timeout
             let timeoutId: NodeJS.Timeout;
 
             const handleMessage = (event: MessageEvent) => {
-                console.log('Received message mama yao:', event.data);
                 const response = JSON.parse(event.data);
 
                 if (response.msg_type === Object.keys(request)[0] || response.error?.code) {
-                    console.log('Received valid response mama yao:', response);
+
                     clearTimeout(timeoutId);
                     this.ws.removeEventListener('message', handleMessage);
 
                     if (response.error) {
-                        console.error('Error in response:', response.error);
+
                         reject(new Error(response.error.message));
                     } else {
                         resolve(response);
@@ -116,56 +128,91 @@ export class DerivAPI {
                 }, timeoutDuration);
             };
 
-            if (this.isReady && this.ws.readyState === WebSocket.OPEN) {
-                sendRequestAction();
-            } else {
-                this.sendWhenReady(sendRequestAction);
-            }
+            this.sendWhenReady(sendRequestAction);
         });
     }
 
-    static requestSubscribe(request: object, callback: (data: Record<string, unknown>) => void) {
+    // requestSubscribe: Handles subscribing to a symbol and storing the subscription ID
+   
+    static requestSubscribe(request: object, callback: (data: Record<string, unknown>) => void): () => void {
         console.log('Subscribing with request:', request);
         let subscriptionId: string | null = null;
 
         const handleMessage = (event: MessageEvent) => {
-            console.log('Received subscription message:', event.data);
             const response = JSON.parse(event.data);
 
             if (response.subscription?.id) {
                 subscriptionId = response.subscription.id;
-                console.log('Subscription ID:', subscriptionId);
+                console.log('Subscription ID:', subscriptionId); // Make sure this prints the real subscription ID
             }
 
-            callback(response);
+            if (response.error) {
+                console.error('Subscription error:', response.error.message);
+            } else {
+                callback(response);  // Call the provided callback with the response data
+            }
         };
 
         this.sendWhenReady(() => {
-            console.log('Sending subscribe request...');
             this.ws.addEventListener('message', handleMessage);
-            this.ws.send(JSON.stringify({
-                ...request,
-                subscribe: 1
-            }));
+            this.ws.send(JSON.stringify({ ...request, subscribe: 1 }));
         });
 
-        // Return unsubscribe function
+        // Return a function to unsubscribe using the subscription ID
         return () => {
-            console.log('Unsubscribing...');
             if (subscriptionId) {
-                this.requestForget({ forget: subscriptionId });
+                console.log(`Unsubscribing from subscription ID: ${subscriptionId}`);
+                this.requestForget({ forget: subscriptionId }, callback); // Pass the real subscription ID for forget
+            } else {
+                console.error('No subscription ID available for forget request');
             }
             this.ws?.removeEventListener('message', handleMessage);
         };
     }
 
-    static requestForget(request: object, callback: (data: any) => void) {
-        console.log('Sending forget request:', request);
+
+    // requestForget: Unsubscribes using the provided symbol subscription ID
+    
+    static requestForget(
+        request: { forget: string },
+        callback?: (data: any) => void // Make callback optional
+    ): void {
+        console.log('Requesting forget for subscription ID:', request);
+
+        if (!request.forget) {
+            console.error('Forget request is missing the subscription ID');
+            return;
+        }
+
+        const handleMessage = (event: MessageEvent) => {
+            const response = JSON.parse(event.data);
+
+            if (response.forget) {
+                console.log('Forget successful:', response);
+
+                // Check if callback is a valid function before calling it
+                if (typeof callback === 'function') {
+                    callback(response); // Call the provided callback with the response data
+                } else {
+                    console.warn('Callback is not a function or not provided');
+                }
+
+                this.ws.removeEventListener('message', handleMessage);
+            } else if (response.error) {
+                console.error('Forget error:', response.error.message);
+            } else {
+                console.warn('Unexpected response to forget request:', response);
+            }
+        };
+
         this.sendWhenReady(() => {
-            this.ws.send(JSON.stringify(request));
+            // Sending the forget request with the subscription ID
+            const forgetRequest = { forget: request.forget, req_id: Math.floor(Math.random() * 1000) }; // Add req_id for mapping if needed
+            console.log('Sending forget request:', forgetRequest);
+            this.ws.addEventListener('message', handleMessage);
+            this.ws.send(JSON.stringify(forgetRequest));
         });
     }
-}
 
 
 

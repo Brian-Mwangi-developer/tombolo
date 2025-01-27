@@ -1,8 +1,8 @@
 // app/layout.tsx
-
 import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { TickCounterProvider } from "@/context/use-tickcounter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <TickCounterProvider>
     <html lang="en">
       <head>
         {/* Correct path to access smartcharts.css in the../../node_modules/@deriv public folder */}
@@ -36,5 +37,6 @@ export default function RootLayout({
         {children}
       </body>
     </html>
+    </TickCounterProvider>
   );
 }
