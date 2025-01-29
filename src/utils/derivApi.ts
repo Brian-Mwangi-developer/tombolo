@@ -13,15 +13,11 @@ export class DerivAPI {
     private static wsUrl = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
 
     static initConnection(token?: string) {
-        console.log('Initializing WebSocket connection...');
         if (this.ws?.readyState === WebSocket.OPEN) {
-            console.log('WebSocket already open, skipping connection initialization.');
             return;
         }
 
         this.ws = new WebSocket(this.wsUrl);
-        console.log('WebSocket created, attempting to connect...');
-
         this.ws.onopen = () => {
             console.log('WebSocket connected successfully');
             this.isReady = true;
@@ -100,13 +96,12 @@ export class DerivAPI {
             const handleMessage = (event: MessageEvent) => {
                 const response = JSON.parse(event.data);
 
+                // Handle the trading times request response
                 if (response.msg_type === Object.keys(request)[0] || response.error?.code) {
-
                     clearTimeout(timeoutId);
                     this.ws.removeEventListener('message', handleMessage);
 
                     if (response.error) {
-
                         reject(new Error(response.error.message));
                     } else {
                         resolve(response);
@@ -132,10 +127,13 @@ export class DerivAPI {
         });
     }
 
+    
+
+
     // requestSubscribe: Handles subscribing to a symbol and storing the subscription ID
    
     static requestSubscribe(request: object, callback: (data: Record<string, unknown>) => void): () => void {
-        console.log('Subscribing with request:', request);
+        console.log('Subscribing with request KIOKO:', request);
         let subscriptionId: string | null = null;
 
         const handleMessage = (event: MessageEvent) => {
@@ -147,7 +145,7 @@ export class DerivAPI {
             }
 
             if (response.error) {
-                console.error('Subscription error:', response.error.message);
+               
             } else {
                 callback(response);  // Call the provided callback with the response data
             }
@@ -175,45 +173,48 @@ export class DerivAPI {
     
     static requestForget(
         request: { forget: string },
-        callback?: (data: any) => void // Make callback optional
-    ): void {
-        console.log('Requesting forget for subscription ID:', request);
+        callback?: (data: any) => void
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            console.log('Requesting forget for subscription ID:', request);
 
-        if (!request.forget) {
-            console.error('Forget request is missing the subscription ID');
-            return;
-        }
-
-        const handleMessage = (event: MessageEvent) => {
-            const response = JSON.parse(event.data);
-
-            if (response.forget) {
-                console.log('Forget successful:', response);
-
-                // Check if callback is a valid function before calling it
-                if (typeof callback === 'function') {
-                    callback(response); // Call the provided callback with the response data
-                } else {
-                    console.warn('Callback is not a function or not provided');
-                }
-
-                this.ws.removeEventListener('message', handleMessage);
-            } else if (response.error) {
-                console.error('Forget error:', response.error.message);
-            } else {
-                console.warn('Unexpected response to forget request:', response);
+            if (!request.forget) {
+                console.error('Forget request is missing the subscription ID');
+                reject(new Error('Forget request missing subscription ID'));
+                return;
             }
-        };
 
-        this.sendWhenReady(() => {
-            // Sending the forget request with the subscription ID
-            const forgetRequest = { forget: request.forget, req_id: Math.floor(Math.random() * 1000) }; // Add req_id for mapping if needed
-            console.log('Sending forget request:', forgetRequest);
-            this.ws.addEventListener('message', handleMessage);
-            this.ws.send(JSON.stringify(forgetRequest));
+            const handleMessage = (event: MessageEvent) => {
+                const response = JSON.parse(event.data);
+                console.log('📩 WebSocket received:', response);
+
+                if (response.forget) {
+                    console.log('✅ Forget successful:', response.forget);
+
+                    if (typeof callback === 'function') {
+                        callback(response);
+                    }
+
+                    this.ws.removeEventListener('message', handleMessage);
+                    resolve();
+                } else if (response.error) {
+                    console.error('❌ Forget error:', response.error.message);
+                    reject(new Error(response.error.message));
+                } else {
+                    console.warn('⚠️ Unexpected forget response. Possible reason: ID mismatch or delayed response:', response);
+                }
+            };
+
+
+            this.sendWhenReady(() => {
+                const forgetRequest = { forget: request.forget, req_id: Math.floor(Math.random() * 1000) };
+                console.log('Sending forget request:', forgetRequest);
+                this.ws.addEventListener('message', handleMessage);
+                this.ws.send(JSON.stringify(forgetRequest));
+            });
         });
     }
-
+}
 
 
 
