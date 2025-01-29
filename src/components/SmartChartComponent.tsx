@@ -15,6 +15,7 @@ import { DerivAPI } from '../utils/derivApi';
 import { useTickCounterContext } from '@/context/use-tickcounter';
 
 
+
 const SmartChartComponent: React.FC = () => {
   const isMobile = window.navigator.userAgent.toLowerCase().includes('mobi');
   const [symbol, setSymbol] = useState<string>('R_100');
@@ -42,6 +43,8 @@ const SmartChartComponent: React.FC = () => {
 
 
 
+
+
   // API call function
   const requestAPI = (request: any) => {
     try {
@@ -53,31 +56,84 @@ const SmartChartComponent: React.FC = () => {
       throw error;
     }
   };
-  
 
-  // Streaming subscription
- const requestSubscribe = useCallback(
+
+
+  
+  
+// Streaming subscription
+const getDecimalPlaces = (value: string) => {
+  const parts = value.split(".");
+  return parts.length === 2 ? parts[1].length : 0;
+};
+
+const formatTick = (tick: string, decimalPlaces: number) => {
+  const currentDecimals = getDecimalPlaces(tick);
+  if (currentDecimals < decimalPlaces) {
+    // Add trailing zeros if necessary
+    return `${tick}${"0".repeat(decimalPlaces - currentDecimals)}`;
+  } else if (currentDecimals > decimalPlaces) {
+    // Truncate extra decimal places if necessary
+    const [integerPart, decimalPart] = tick.split(".");
+    return `${integerPart}.${decimalPart.slice(0, decimalPlaces)}`;
+  }
+  return tick; // No change needed
+};
+
+const requestSubscribe = useCallback(
   (request: Record<string, unknown>, callback: (response: any) => void) => {
     const subscription = DerivAPI.requestSubscribe(request, (response: any) => {
-      console.log('API response received to Kiongozi:', response);
-     
+      console.log("API response received to Kiongozi:", response);
+
       if (response.subscription?.id) {
-        subscriptionRef.current = response.subscription.id; // Save the subscription ID
-        console.log('New subscription ID:', response.subscription.id);
+        subscriptionRef.current = response.subscription.id;
+        console.log("New subscription ID:", response.subscription.id);
+      }
+
+      if (response.history?.prices && Array.isArray(response.history.prices)) {
+        // Extract last 1000 historical ticks
+        const historicalTicks = response.history.prices
+          .slice(-1000)
+          .map((price: number) => price.toString());
+
+        // Detect the max decimal places in history
+        const maxDecimals = Math.max(...historicalTicks.map(getDecimalPlaces));
+
+        // Format all ticks to match the highest decimal places
+        const formattedHistory = historicalTicks.map((tick) =>
+          formatTick(tick, maxDecimals)
+        );
+
+        setTickHistory(formattedHistory);
+        console.log("Fetched 1000 historical ticks:", formattedHistory);
       }
 
       if (response.tick?.quote) {
-        setTickHistory((prev: any[]) => {
-          const updatedHistory = [...prev, response.tick.quote];
-          if (updatedHistory.length > 1000) updatedHistory.splice(0, updatedHistory.length - 1000);
-          setTickCounter(response.tick.quote);
+        const formattedQuote = response.tick.quote.toString();
+
+        setTickHistory((prev: string[]) => {
+          // Combine previous history with the new tick
+          const allTicks = [...prev, formattedQuote];
+
+          // Detect the max decimal places in updated history
+          const maxDecimals = Math.max(...allTicks.map(getDecimalPlaces));
+
+          // Format all values to match the highest decimal places
+          const updatedHistory = allTicks.map((tick) =>
+            formatTick(tick, maxDecimals)
+          );
+
+          // Keep history at 1000 ticks
+          if (updatedHistory.length > 1000) updatedHistory.shift();
+
+          console.log("Updated tickHistory:", updatedHistory);
+          setTickCounter(formattedQuote);
           return updatedHistory;
         });
       }
 
-       // Log the symbol from response.tick
       if (response.tick?.symbol) {
-        console.log('Tick symbol:', response.tick.symbol);
+        console.log("Tick symbol:", response.tick.symbol);
       }
 
       callback(response);
@@ -87,6 +143,7 @@ const SmartChartComponent: React.FC = () => {
   },
   [setTickHistory, setTickCounter]
 );
+
 
 
   const requestForget = useCallback((request: any, callback: (response: any) => void): void => {
@@ -181,16 +238,17 @@ const handleSymbolChange = (newSymbol: string) => {
   return (
     <div>
       <div
-        className="chart-controls"
+        
         style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
+          display: 'flex',
+          top: '100px',
+          right: '100px',
           zIndex: 50,
         }}
-      ></div>
+      >
 
       <SmartChart
+        
         ref={ref}
         id={chartId}
         chartStatusListener={(isChartReady: boolean) => getIsChartReady(isChartReady)}
@@ -221,13 +279,14 @@ const handleSymbolChange = (newSymbol: string) => {
             style={{
               display: 'flex',
               alignItems: 'left',
-              width: '300px',
+              width: '1000px',
               height: '30px',
               marginTop: '100px',
+              position: 'absolute',
             }}
           >
-            <div style={{ fontSize: '10px' }}>
-              <ChartTitle onChange={handleSymbolChange}  />
+           <div style={{ fontSize: '8px', padding: '12px' }}>
+               <ChartTitle onChange={handleSymbolChange}  />
             </div>
           </div>
         )}
@@ -243,6 +302,7 @@ const handleSymbolChange = (newSymbol: string) => {
           </div>
         )}
       />
+      </div>
     </div>
   );
 };

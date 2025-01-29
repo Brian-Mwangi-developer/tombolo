@@ -10,8 +10,8 @@ const DerivChartPage = () => {
     <div className="">
       <Header />
       <div className="" >
-       <div className="absolute z-20 bottom-10 -ml-5 mb-9 left-1/2 transform -translate-x-1/2 bg-transparent">
 
+       <div className="absolute z-20 bottom-10 -ml-5 mb-9 left-1/2 transform -translate-x-1/2 bg-transparent">
        <Circles />
        </div>
     
@@ -19,8 +19,6 @@ const DerivChartPage = () => {
 
       </div>
      
-      
-      <Footer />
     </div>
   );
 };
