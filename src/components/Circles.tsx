@@ -100,7 +100,7 @@ const CircleDesign: React.FC = () => {
       // Determine border color
       let borderColor = "gray";
       if (percentage === maxPercentage) {
-        borderColor = "green";
+        borderColor = "#22D3EE";
       } else if (percentage === minPercentage) {
         borderColor = "red";
       }

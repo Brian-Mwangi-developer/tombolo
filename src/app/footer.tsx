@@ -17,7 +17,7 @@ const Footer = () => {
           <h3 className="text-lg font-bold text-green-400 mb-3">Contact Us</h3>
           <ul className="space-y-2">
             <li className="flex justify-center md:justify-start items-center gap-2">
-              <FaEnvelope /> <span>support@finestburutraders.com</span>
+              <FaEnvelope /> <span>finesttraders1@gmail.com</span>
             </li>
             <li className="flex justify-center md:justify-start items-center gap-2">
               <FaPhone /> <span>+254 753 668073</span>

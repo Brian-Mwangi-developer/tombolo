@@ -4,13 +4,15 @@ interface ForgetRequest {
 
 export class DerivAPI {
     private static ws: WebSocket;
-    private static isReady = false;
+    public static isReady = false;
     private static requestQueue: Array<() => void> = [];
     private static reconnectAttempts = 0;
     private static maxReconnectAttempts = 5;
     private static reconnectDelay = 1000; // Start with 1 second delay
     private static appId = 66642;
     private static wsUrl = `wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`;
+    static connection: any;
+    static endpoint: string | URL;
 
     static initConnection(token?: string) {
         if (this.ws?.readyState === WebSocket.OPEN) {
@@ -36,11 +38,6 @@ export class DerivAPI {
             }
         };
 
-        this.ws.onclose = () => {
-            console.warn('WebSocket connection closed');
-            this.isReady = false;
-            this.handleReconnection();
-        };
 
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
@@ -48,20 +45,7 @@ export class DerivAPI {
         };
     }
 
-    private static handleReconnection() {
-        console.log('Handling reconnection...');
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-
-            setTimeout(() => {
-                this.initConnection(); // Attempt to reconnect
-                this.reconnectDelay *= 2; // Exponential backoff
-            }, this.reconnectDelay);
-        } else {
-            console.error('Max reconnection attempts reached');
-        }
-    }
+    
 
     private static sendWhenReady(requestAction: () => void) {
         console.log('Checking WebSocket readiness...');
@@ -96,10 +80,10 @@ export class DerivAPI {
             const handleMessage = (event: MessageEvent) => {
                 const response = JSON.parse(event.data);
 
-                // Handle the trading times request response
+                // Handle the response based on request type
                 if (response.msg_type === Object.keys(request)[0] || response.error?.code) {
                     clearTimeout(timeoutId);
-                    this.ws.removeEventListener('message', handleMessage);
+                    this.ws.removeEventListener("message", handleMessage);
 
                     if (response.error) {
                         reject(new Error(response.error.message));
@@ -107,33 +91,30 @@ export class DerivAPI {
                         resolve(response);
                     }
                 } else {
-                    console.log('Received unrelated response:', response);
+                    console.log("Received unrelated response:", response);
                 }
             };
 
             const sendRequestAction = () => {
-                console.log('Sending request action...');
-                this.ws.addEventListener('message', handleMessage);
+                console.log("Sending request action...");
+                this.ws.addEventListener("message", handleMessage);
                 this.ws.send(JSON.stringify(request));
 
                 timeoutId = setTimeout(() => {
-                    console.log('Request timeout reached');
-                    this.ws.removeEventListener('message', handleMessage);
-                    reject(new Error('Request timeout'));
+                    console.log("Request timeout reached");
+                    this.ws.removeEventListener("message", handleMessage);
+                    reject(new Error("Request timeout"));
                 }, timeoutDuration);
             };
 
+            // Ensure the request is only sent when WebSocket is connected
             this.sendWhenReady(sendRequestAction);
         });
     }
 
-    
-
-
     // requestSubscribe: Handles subscribing to a symbol and storing the subscription ID
-   
     static requestSubscribe(request: object, callback: (data: Record<string, unknown>) => void): () => void {
-        console.log('Subscribing with request KIOKO:', request);
+        console.log('Subscribing with request:', request);
         let subscriptionId: string | null = null;
 
         const handleMessage = (event: MessageEvent) => {
@@ -141,11 +122,10 @@ export class DerivAPI {
 
             if (response.subscription?.id) {
                 subscriptionId = response.subscription.id;
-                console.log('Subscription ID:', subscriptionId); // Make sure this prints the real subscription ID
             }
 
             if (response.error) {
-               
+                // Handle error if needed
             } else {
                 callback(response);  // Call the provided callback with the response data
             }
@@ -168,53 +148,54 @@ export class DerivAPI {
         };
     }
 
-
     // requestForget: Unsubscribes using the provided symbol subscription ID
-    
     static requestForget(
         request: { forget: string },
         callback?: (data: any) => void
     ): Promise<void> {
         return new Promise((resolve, reject) => {
-            console.log('Requesting forget for subscription ID:', request);
+            console.log("Requesting forget for subscription ID:", request);
 
             if (!request.forget) {
-                console.error('Forget request is missing the subscription ID');
-                reject(new Error('Forget request missing subscription ID'));
+                console.error("Forget request is missing the subscription ID");
+                reject(new Error("Forget request missing subscription ID"));
                 return;
             }
 
             const handleMessage = (event: MessageEvent) => {
                 const response = JSON.parse(event.data);
-                console.log('📩 WebSocket received:', response);
+                console.log("📩 WebSocket received:", response);
 
                 if (response.forget) {
-                    console.log('✅ Forget successful:', response.forget);
+                    console.log("✅ Forget successful:", response.forget);
 
-                    if (typeof callback === 'function') {
+                    if (typeof callback === "function") {
                         callback(response);
                     }
 
-                    this.ws.removeEventListener('message', handleMessage);
+                    this.ws.removeEventListener("message", handleMessage);
+                    this.ws.close(); // Close WebSocket after successful forget
                     resolve();
                 } else if (response.error) {
-                    console.error('❌ Forget error:', response.error.message);
+                    console.error("❌ Forget error:", response.error.message);
                     reject(new Error(response.error.message));
                 } else {
-                    console.warn('⚠️ Unexpected forget response. Possible reason: ID mismatch or delayed response:', response);
+                    console.warn(
+                        "⚠️ Unexpected forget response. Possible reason: ID mismatch or delayed response:",
+                        response
+                    );
                 }
             };
 
-
             this.sendWhenReady(() => {
-                const forgetRequest = { forget: request.forget, req_id: Math.floor(Math.random() * 1000) };
-                console.log('Sending forget request:', forgetRequest);
-                this.ws.addEventListener('message', handleMessage);
+                const forgetRequest = {
+                    forget: request.forget,
+                    req_id: Math.floor(Math.random() * 1000),
+                };
+                console.log("Sending forget request:", forgetRequest);
+                this.ws.addEventListener("message", handleMessage);
                 this.ws.send(JSON.stringify(forgetRequest));
             });
         });
     }
 }
-
-
-

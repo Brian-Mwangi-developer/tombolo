@@ -58,7 +58,7 @@ export const TickCounterProvider = ({ children }: { children: React.ReactNode })
       }
 
       // Log tick history for debugging
-      console.log("Tick History:", tickHistory);
+      // console.log("Tick History:", tickHistory);
 
       tickHistory.forEach((tick) => {
         // Get the last digit of the string
@@ -77,7 +77,7 @@ export const TickCounterProvider = ({ children }: { children: React.ReactNode })
         percentages[digit] = totalTicks > 0 ? parseFloat(((count / totalTicks) * 100).toFixed(2)) : 0;
       }
 
-      console.log("Digit Percentages:", percentages); // Debugging log
+      // console.log("Digit Percentages:", percentages); // Debugging log
       setDigitPercentages(percentages);
       // Save the updated percentages to localStorage
       localStorage.setItem("digitPercentages", JSON.stringify(percentages));
