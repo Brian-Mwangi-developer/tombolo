@@ -1,5 +1,5 @@
-'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+// @ts-ignore
 import { SmartChart, ChartTitle, ChartMode, ToolbarWidget } from '@deriv/deriv-charts';
 import { DerivAPI } from '../utils/derivApi';
 import { useTickCounterContext } from '@/context/use-tickcounter';
@@ -10,37 +10,36 @@ const SmartChartComponent: React.FC = () => {
   const [chartType, setChartType] = useState<string>('line');
   const { setTickCounter, setTickHistory } = useTickCounterContext();
   const subscriptionRef = useRef<string | null>(null); // Track the current subscription ID
-  
-  
+  const [isClient, setIsClient] = useState(false); // To track whether it's client-side or not
+
+  useEffect(() => {
+    // This effect will only run on the client-side
+    setIsClient(true);
+  }, []);
+
   // API call function
   const requestAPI = (request: any) => {
-  if (subscriptionRef.current) {
-    console.log("Active subscription exists:", subscriptionRef.current);
-  } else {
-    console.log("No active subscription found. You need to subscribe first.");
-  }
+    if (subscriptionRef.current) {
+      console.log("Active subscription exists:", subscriptionRef.current);
+    } else {
+      console.log("No active subscription found. You need to subscribe first.");
+    }
 
-  console.log("The Request API is called FALA", request);
+    console.log("The Request API is called FALA", request);
 
-  const responsePromise = DerivAPI.sendRequest(request);
+    const responsePromise = DerivAPI.sendRequest(request);
 
-  responsePromise
-    .then(response => {
-      console.log('API response received FALA:', response);
-    })
-    .catch(error => {
-      console.error('API request error:', error);
-    });
+    responsePromise
+      .then(response => {
+        console.log('API response received FALA:', response);
+      })
+      .catch(error => {
+        console.error('API request error:', error);
+      });
 
-  return responsePromise;
-};
+    return responsePromise;
+  };
 
-
-
-
-
-
-  // Streaming subscription
   const getDecimalPlaces = (value: string) => {
     const parts = value.split(".");
     return parts.length === 2 ? parts[1].length : 0;
@@ -49,16 +48,13 @@ const SmartChartComponent: React.FC = () => {
   const formatTick = (tick: string, decimalPlaces: number) => {
     const currentDecimals = getDecimalPlaces(tick);
     if (currentDecimals < decimalPlaces) {
-      // Add trailing zeros if necessary
       return `${tick}${"0".repeat(decimalPlaces - currentDecimals)}`;
     } else if (currentDecimals > decimalPlaces) {
-      // Truncate extra decimal places if necessary
       const [integerPart, decimalPart] = tick.split(".");
       return `${integerPart}.${decimalPart.slice(0, decimalPlaces)}`;
     }
-    return tick; // No change needed
+    return tick;
   };
-
 
   const requestSubscribe = useCallback(
     (request: Record<string, unknown>, callback: (response: any) => void) => {
@@ -70,15 +66,12 @@ const SmartChartComponent: React.FC = () => {
         }
 
         if (response.history?.prices && Array.isArray(response.history.prices)) {
-          // Extract last 1000 historical ticks
           const historicalTicks = response.history.prices
             .slice(-1000)
             .map((price: number) => price.toString());
 
-          // Detect the max decimal places in history
           const maxDecimals = Math.max(...historicalTicks.map(getDecimalPlaces));
-
-          // Format all ticks to match the highest decimal places
+// @ts-ignore
           const formattedHistory = historicalTicks.map((tick) =>
             formatTick(tick, maxDecimals)
           );
@@ -88,7 +81,7 @@ const SmartChartComponent: React.FC = () => {
 
         if (response.tick?.quote) {
           const formattedQuote = response.tick.quote.toString();
-
+          // @ts-ignore
           setTickHistory((prev: string[]) => {
             const allTicks = [...prev, formattedQuote];
             const maxDecimals = Math.max(...allTicks.map(getDecimalPlaces));
@@ -110,8 +103,6 @@ const SmartChartComponent: React.FC = () => {
     },
     [setTickHistory, setTickCounter]
   );
-
-
 
   const requestForget = useCallback((request: any, callback: (response: any) => void): void => {
     if (!subscriptionRef.current) {
@@ -136,8 +127,6 @@ const SmartChartComponent: React.FC = () => {
       callback(response);
     });
   }, []);
-
-
 
   const handleSymbolChange = (newSymbol: string) => {
     if (subscriptionRef.current) {
@@ -164,8 +153,6 @@ const SmartChartComponent: React.FC = () => {
     }
   };
 
-
-
   return (
     <div style={{ display: 'flex', flexDirection: 'row', zIndex: 50 }}>
       <SmartChart
@@ -177,7 +164,7 @@ const SmartChartComponent: React.FC = () => {
         isLive
         topWidgets={() => (
           <div style={{ display: 'flex', alignItems: 'left', width: '1000px', height: '30px', marginTop: '100px' }}>
-            <div style={{ padding: '7px', display: 'flex', zIndex: 50, width: window.innerWidth <= 600 ? '350px' : '400px', fontSize: window.innerWidth <= 600 ? '8px' : '10px' }}>
+            <div style={{ padding: '7px', display: 'flex', zIndex: 50, width: isClient && window.innerWidth <= 600 ? '350px' : '400px', fontSize: isClient && window.innerWidth <= 600 ? '8px' : '10px' }}>
               <ChartTitle onChange={handleSymbolChange} isNestedList={false} open_market={{ category: 'derived', subcategory: 'synthetics' }} />
             </div>
           </div>
@@ -195,7 +182,3 @@ const SmartChartComponent: React.FC = () => {
 };
 
 export default SmartChartComponent;
-
-
-
-

@@ -12,7 +12,9 @@ const DerivPage = () => {
     script.async = true;
 
     script.onload = () => {
+      // @ts-ignore
       if (typeof window.TradingView !== 'undefined') {
+        // @ts-ignore
         new window.TradingView.widget({
           container_id: 'tradingview-chart',
           autosize: true,
