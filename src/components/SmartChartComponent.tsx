@@ -1,24 +1,18 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-
-import { SmartChart, ChartTitle, ChartMode, ToolbarWidget } from '@deriv/deriv-charts';
+import { SmartChart } from '@deriv/deriv-charts';
+import { ChartTitle, ChartMode, ToolbarWidget } from '@deriv/deriv-charts';
 import { DerivAPI } from '../utils/derivApi';
 import { useTickCounterContext } from '@/context/use-tickcounter';
 
 
 const SmartChartComponent: React.FC = () => {
+  const [SmartChartModule, setSmartChartModule] = useState<any>(null);
   const [symbol, setSymbol] = useState<string>('R_100');
   const [granularity, setGranularity] = useState<number>(0);
   const [chartType, setChartType] = useState<string>('line');
   const { setTickCounter, setTickHistory } = useTickCounterContext();
   const subscriptionRef = useRef<string | null>(null); // Track the current subscription ID
   const [isClient, setIsClient] = useState(false); // To track whether it's client-side or not
-
-
-  useEffect(() => {
-    // This effect will only run on the client-side
-    setIsClient(true);
-  }, []);
-
   
 
   // API call function

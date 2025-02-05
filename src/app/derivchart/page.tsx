@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 // @ts-ignore
-import SmartChartComponent from "@/components/SmartChartComponent";
+//import SmartChartComponent from "@/components/SmartChartComponent";
+import dynamic from "next/dynamic";
 import Header from "../header";
 import Circles from "@/components/Circles";
 import { FaChevronRight } from "react-icons/fa";
@@ -10,6 +11,18 @@ import { MdTrendingUp, MdTouchApp } from "react-icons/md";
 import { IoMdPulse } from "react-icons/io";
 import { BiShuffle } from "react-icons/bi";
 import { FaCircle, FaCheckCircle } from "react-icons/fa";
+
+
+const SmartChartComponent = dynamic(
+  () => import('@/components/SmartChartComponent'),
+  {
+    ssr: false, // Maintain SSR for the wrapper
+    loading: () => <div className="chart-loading">Loading trading view...</div>
+  }
+);
+
+
+
 
 const categories = [
   
@@ -71,7 +84,7 @@ const DerivChartPage = () => {
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <div className="flex items-center space-x-2 -mt-5">
-              <MdTrendingUp className="text-yellow-800 text-2xl" />O37f5jQNj8Qfd5OL1e
+              <MdTrendingUp className="text-yellow-800 text-2xl" />
               <span className="font-semibold text-blue-800 text-lg">Digits</span>
             </div>
             <FaChevronRight
