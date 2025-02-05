@@ -1,8 +1,15 @@
 'use client';
 import Header from '../header'; // Adjust the path if needed
 import Footer from '../footer';
-
+import dynamic from 'next/dynamic';
+// @ts-ignore
 import React, { useEffect } from 'react';
+
+// Dynamically import SmartChartComponent with no SSR
+// @ts-ignore
+const SmartChartComponent = dynamic(() => import('../path/to/SmartChartComponent'), {
+  ssr: false,
+});
 
 const DerivPage = () => {
   useEffect(() => {
@@ -46,17 +53,20 @@ const DerivPage = () => {
     <div>
       <Header />
 
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 mt-20 md:mt-28">
-      <h1 className="text-3xl font-bold text-white mb-6 mt-6">TradingView Chart</h1>
-      <div
-        id="tradingview-chart"
-        className="w-full max-w-6xl h-[600px] bg-gray-800 rounded-md shadow-md"
-      ></div>
-    </div>
-    <Footer />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 mt-20 md:mt-28">
+        <h1 className="text-3xl font-bold text-white mb-6 mt-6">TradingView Chart</h1>
+        <div
+          id="tradingview-chart"
+          className="w-full max-w-6xl h-[600px] bg-gray-800 rounded-md shadow-md"
+        ></div>
+
+        {/* Conditionally render SmartChartComponent */}
+        <SmartChartComponent />
+      </div>
+      
+      <Footer />
     </div>
   );
 };
 
 export default DerivPage;
-
