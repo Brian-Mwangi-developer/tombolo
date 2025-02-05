@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+// @ts-ignore
 import SmartChartComponent from "@/components/SmartChartComponent";
 import Header from "../header";
 import Circles from "@/components/Circles";
