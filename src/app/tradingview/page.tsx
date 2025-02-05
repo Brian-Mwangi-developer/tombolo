@@ -6,10 +6,6 @@ import dynamic from 'next/dynamic';
 import React, { useEffect } from 'react';
 
 // Dynamically import SmartChartComponent with no SSR
-// @ts-ignore
-const SmartChartComponent = dynamic(() => import('../path/to/SmartChartComponent'), {
-  ssr: false,
-});
 
 const DerivPage = () => {
   useEffect(() => {
@@ -60,8 +56,7 @@ const DerivPage = () => {
           className="w-full max-w-6xl h-[600px] bg-gray-800 rounded-md shadow-md"
         ></div>
 
-        {/* Conditionally render SmartChartComponent */}
-        <SmartChartComponent />
+       
       </div>
       
       <Footer />
