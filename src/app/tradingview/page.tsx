@@ -1,7 +1,6 @@
 'use client';
 import Header from '../header'; // Adjust the path if needed
 import Footer from '../footer';
-import dynamic from 'next/dynamic';
 // @ts-ignore
 import React, { useEffect } from 'react';
 

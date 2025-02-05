@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack(config, { isServer }) {
-    // No need to use CopyWebpackPlugin since files are already in public/dist
+  webpack(config) {
+    config.ignoreWarnings = [
+      {
+        message: /self is not defined/,
+      },
+    ];
     return config;
   },
 };
 
 export default nextConfig;
-
-

@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic'; 
-// @ts-ignore
-//import { SmartChart, ChartTitle, ChartMode, ToolbarWidget } from '@deriv/deriv-charts';
+
+import { SmartChart, ChartTitle, ChartMode, ToolbarWidget } from '@deriv/deriv-charts';
 import { DerivAPI } from '../utils/derivApi';
 import { useTickCounterContext } from '@/context/use-tickcounter';
+
 
 const SmartChartComponent: React.FC = () => {
   const [symbol, setSymbol] = useState<string>('R_100');
@@ -13,10 +13,13 @@ const SmartChartComponent: React.FC = () => {
   const subscriptionRef = useRef<string | null>(null); // Track the current subscription ID
   const [isClient, setIsClient] = useState(false); // To track whether it's client-side or not
 
+
   useEffect(() => {
     // This effect will only run on the client-side
     setIsClient(true);
   }, []);
+
+  
 
   // API call function
   const requestAPI = (request: any) => {
@@ -154,9 +157,12 @@ const SmartChartComponent: React.FC = () => {
     }
   };
 
+
+  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', zIndex: 50 }}>
-      {/*<SmartChart
+      <SmartChart
         symbol={symbol}
         isMobile={true}
         requestAPI={requestAPI}
@@ -177,7 +183,7 @@ const SmartChartComponent: React.FC = () => {
             </ToolbarWidget>
           </div>
         )}
-      />*/}
+      />
     </div>
   );
 };
