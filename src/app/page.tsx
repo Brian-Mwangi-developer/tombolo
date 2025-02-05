@@ -93,7 +93,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-blue-800 text-white text-center py-3 px-4 mt-12">
-        <p>&copy; 2025 Finesttraders. All rights reserved.</p>
+        <p>&copy; 2025 FinestTraders. All rights reserved.</p>
       </footer>
     </div>
   );
