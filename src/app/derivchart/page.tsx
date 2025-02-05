@@ -50,13 +50,7 @@ const DerivChartPage = () => {
     };
   }, [pathname]);
 
-  useEffect(() => {
-    if (!hasReloaded.current && !sessionStorage.getItem(pageKey)) {
-      hasReloaded.current = true;
-      sessionStorage.setItem(pageKey, "true");
-      location.reload();
-    }
-  }, [pageKey]);
+  
 
   const handleSelectItem = (name: string) => {
     setSelectedItem(name);
